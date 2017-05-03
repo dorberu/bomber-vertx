@@ -2,7 +2,8 @@ package com.dorberu;
 
 import io.vertx.core.Vertx;
 
-public class GameServer {
+public class GameServer
+{
 	protected static final GameServer _this = new GameServer();
 	
 	protected Vertx _vertx;
