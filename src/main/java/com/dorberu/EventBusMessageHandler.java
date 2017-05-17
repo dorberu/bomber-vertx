@@ -1,17 +1,18 @@
 package com.dorberu;
 
 import io.vertx.core.eventbus.MessageConsumer;
+import io.vertx.core.json.JsonObject;
+
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 
 public class EventBusMessageHandler
 {
+	public static int HANDLER_SIZE = 20;
+	
     public interface MessageReceiver
     {
-        public abstract boolean onMessagePacketBytesReceive(String handlerId,
-                                                            String packetData);
-
-        public abstract void onMessageClose();
+        public abstract void receivePacket(String handlerId, JsonObject packetData);
     }
 
     protected String _globalAddr;
@@ -40,9 +41,11 @@ public class EventBusMessageHandler
             _consumer.handler(message -> {
                 try {
                 	Buffer buffer = message.body();
-                	String handlerId = buffer.getString(0, 20, "UTF-8");
-                	String data = buffer.getString(20, buffer.length(), "UTF-8");
-                    _receiver.onMessagePacketBytesReceive(handlerId, data);
+                	String handlerId = buffer.getString(0, HANDLER_SIZE, "UTF-8");
+                	String json = buffer.getString(HANDLER_SIZE, buffer.length(), "UTF-8");
+                	
+                	JsonObject data = new JsonObject(json);
+            		_receiver.receivePacket(handlerId, data);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

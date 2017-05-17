@@ -1,18 +1,22 @@
 package com.dorberu;
 
+import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.lang3.RandomStringUtils;
+
+import com.dorberu.packet.LogoutPacket;
 
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.ServerWebSocket;
+import io.vertx.core.json.JsonObject;
 
 public class WebSocketServer implements EventBusMessageHandler.MessageReceiver
-{
+{	
 	protected static final WebSocketServer _this = new WebSocketServer();
 
 	protected Vertx _vertx;
@@ -27,7 +31,7 @@ public class WebSocketServer implements EventBusMessageHandler.MessageReceiver
 
     public boolean onInit(Vertx vertx)
     {
-    	System.out.println(getClass().getName() + " DEBUG " + "init");
+    	System.out.println(getClass().getName() + " onInit");
 
     	_vertx = vertx;
     	_eventBusMessageHandler = new EventBusMessageHandler(_vertx, this, "websocketserver.local", "websocketserver.global");
@@ -36,17 +40,21 @@ public class WebSocketServer implements EventBusMessageHandler.MessageReceiver
         HttpServer server = _vertx.createHttpServer();
         server.websocketHandler(websocket ->
         {
-            System.out.println(getClass().getName() + " DEBUG " + "connect");
-            
-            String handlerId = RandomStringUtils.random(20, "0123456789abcdefghijklmnopqrstuvwxyz");
+            String handlerId = RandomStringUtils.random(EventBusMessageHandler.HANDLER_SIZE, "0123456789abcdefghijklmnopqrstuvwxyz");
             _socketList.put(handlerId, websocket);
+        	System.out.println(getClass().getName() +  " handlerId: " + handlerId + " connect");
             
             websocket.handler(new Handler<Buffer>()
             {
                 @Override
                 public void handle(final Buffer buffer)
                 {
-                    _vertx.eventBus().send("gameserver.local", Buffer.buffer(handlerId).appendBuffer(buffer));
+                    try {
+                    	Buffer sendBuffer = Buffer.buffer(handlerId.getBytes("UTF-8")).appendBuffer(buffer);
+						_vertx.eventBus().send("gameserver.local", sendBuffer);
+					} catch (UnsupportedEncodingException e) {
+						e.printStackTrace();
+					}
                 }
             });
 
@@ -56,32 +64,34 @@ public class WebSocketServer implements EventBusMessageHandler.MessageReceiver
                 public void handle(Void event)
                 {
                 	_socketList.remove(handlerId);
-                	System.out.println(getClass().getName() + " DEBUG " + "close");
+                	try {
+	                	Buffer logoutBuffer = Buffer.buffer(LogoutPacket.getDummyPacket().toString().getBytes("UTF-8"));
+	                	Buffer buffer = Buffer.buffer(handlerId.getBytes("UTF-8")).appendBuffer(logoutBuffer);
+	                	_vertx.eventBus().send("gameserver.local", buffer);
+                	} catch (UnsupportedEncodingException e) {
+            			e.printStackTrace();
+            		}
                 }
             });
         }).listen(8080);
         
-        System.out.println(getClass().getName() + " DEBUG " + "init completed");
+        System.out.println(getClass().getName() + " onInit completed");
         return true;
     }
     
-    public void sendMessage(String handlerId, String data)
+    public void sendMessage(String handlerId, JsonObject data)
     {
     	if (_socketList.get(handlerId) != null)
     	{
-    		System.out.println(getClass().getName() + " DEBUG " + "sendMessage " + data);
-    		_socketList.get(handlerId).writeFinalTextFrame(data);
+    		_socketList.get(handlerId).writeFinalTextFrame(data.toString());
+            System.out.println(getClass().getName() + " sendMessage handlerId: " + handlerId + ", packetData: " + data.toString());
     	}
     }
     
     @Override
-    public boolean onMessagePacketBytesReceive(String handlerId, String packetData) {
-        System.out.println(getClass().getName() + " DEBUG " + "onMessagePacketBytesReceive " + handlerId + " : " + packetData);
-        sendMessage(handlerId, packetData);
-        return true;
-    }
-
-    @Override
-    public void onMessageClose() {
+    public void receivePacket(String handlerId, JsonObject packetData)
+    {
+        System.out.println(getClass().getName() + " receivePacket handlerId: " + handlerId + ", packetData: " + packetData);
+    	sendMessage(handlerId, packetData);
     }
 }
