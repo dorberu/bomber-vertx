@@ -12,7 +12,7 @@ public class GameVerticle extends AbstractVerticle
     @Override
     public void start()
     {
-    	System.out.println(getClass().getName() + " DEBUG " + "start");
+    	Log.info(getClass().getName(), "start");
     	
     	_gameServer.onInit(vertx);
 

@@ -3,6 +3,7 @@ package com.dorberu;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.dorberu.packet.Packet;
 
@@ -26,22 +27,36 @@ public class GameServer implements EventBusMessageHandler.MessageReceiver
     
     public boolean onInit(Vertx vertx)
     {
-        System.out.println(getClass().getName() + " onInit");
+        Log.info(getClass().getName(), "onInit");
         
         this.vertx = vertx;
         this.eventBusMessageHandler = new EventBusMessageHandler(this.vertx, this, "gameserver.local", "gameserver.global");
         this.battleRoomControllerList = new ArrayList<>();
-        
-        System.out.println(getClass().getName() + " onInit completed");
+
+        Log.info(getClass().getName(), "onInit", "complete");
         return true;
     }
 
     protected void onTick(Long microDelay)
     {
-        for (BattleRoomController battleRoomController : this.battleRoomControllerList)
-        {
-        	battleRoomController.onTick();
-        }
+    	this.battleRoomControllerList.forEach(o -> o.onTick());
+    }
+    
+    public BattleRoomController addBattleRoomController()
+    {
+    	BattleRoomController battleRoomController = new BattleRoomController();
+    	this.battleRoomControllerList.add(battleRoomController);
+    	return battleRoomController;
+    }
+    
+    public BattleRoomController getBattleRoomController(String handlerId)
+    {
+    	return this.battleRoomControllerList.stream().filter(o -> o.containsCharacter(handlerId)).findFirst().orElse(null);
+    }
+    
+    public BattleRoomController getEmptyBattleRoomController()
+    {
+    	return this.battleRoomControllerList.stream().filter(o -> !o.isFull()).findFirst().orElse(null);
     }
     
     public void sendPacket(String handlerId, JsonObject packet)
@@ -50,16 +65,37 @@ public class GameServer implements EventBusMessageHandler.MessageReceiver
 			Buffer buffer = Buffer.buffer(handlerId.getBytes("UTF-8"));
 			buffer.appendBytes(packet.toString().getBytes("UTF-8"));
 			this.vertx.eventBus().send("websocketserver.local", buffer);
-	        System.out.println(getClass().getName() + " sendPacket handlerId: " + handlerId + ", packetData: " + packet.toString());
+	        Log.info(getClass().getName(), "sendPacket", "handlerId: " + handlerId, "packetData: " + packet.toString());
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
 		}
     }
     
+    public List<CharacterController> getEnemies(String handlerId)
+    {
+    	BattleRoomController battleRoomController = this.getBattleRoomController(handlerId);
+    	if (battleRoomController != null)
+    	{
+    		return battleRoomController.getCharacterControllers().stream().filter(ch -> !ch.handlerId.equals(handlerId)).collect(Collectors.toList());
+    	}
+    	return null;
+    }
+    
+    public void publishPacket(String handlerId, JsonObject packet)
+    {
+    	BattleRoomController battleRoomController = this.getBattleRoomController(handlerId);
+    	if (battleRoomController != null)
+    	{
+        	battleRoomController.getHandlerIds().stream().filter(id -> !id.equals(handlerId)).forEach(otherId -> {
+        		this.sendPacket(otherId, packet);
+        	});
+    	}
+    }
+    
     @Override
     public void receivePacket(String handlerId, JsonObject packetData)
     {
-        System.out.println(getClass().getName() + " receivePacket handlerId: " + handlerId + ", packetData: " + packetData);
+    	Log.trace(getClass().getName(), "receivePacket", "handlerId: " + handlerId, "packetData: " + packetData);
         Packet packet = Packet.getPacket(packetData);
         if (packet != null)
         {
@@ -67,7 +103,7 @@ public class GameServer implements EventBusMessageHandler.MessageReceiver
         }
         else
         {
-            System.out.println(getClass().getName() + " handlerId: " + handlerId + " packetId not found. packetData: " + packetData);
+        	Log.error(getClass().getName(), "receivePacket", "packetId not found", "handlerId: " + handlerId, "packetData: " + packetData);
         }
     }
 }

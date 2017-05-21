@@ -13,25 +13,19 @@ public class LogoutPacket extends Packet
 	{
 		super(id, data);
 	}
-	
+
+	@Override
 	public void load(String handlerId, GameServer server)
 	{
-		if (server.battleRoomControllerList.size() == 0)
+		BattleRoomController battleRoomController = server.getBattleRoomController(handlerId);
+		if (battleRoomController != null)
 		{
-			return;
+			battleRoomController.removeCharacter(handlerId);
 		}
-		
-        for (BattleRoomController battleRoomController : server.battleRoomControllerList)
-        {
-        	if (battleRoomController.containsCharacter(handlerId))
-        	{
-        		battleRoomController.removeCharacter(handlerId);
-        	}
-        }
         
         JsonObject packet = new JsonObject();
         packet.put(KEY_ID, PACKET_ID);
-        packet.put(KEY_RESULT, 1);
+        packet.put(KEY_RESULT, result);
         server.sendPacket(handlerId, packet);
 	}
 	

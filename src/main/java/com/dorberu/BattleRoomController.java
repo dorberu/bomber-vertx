@@ -1,15 +1,16 @@
 package com.dorberu;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class BattleRoomController
 {
 	private static final int MAX_CHARACTER_COUNT = 4;
 	private int _characterCount;
-	
-	private Map<String, CharacterController> _handlerIds = new HashMap<>();
+	private Map<String, CharacterController> _characterControllers = new HashMap<>();
 	
 	
     public boolean onInit()
@@ -19,40 +20,51 @@ public class BattleRoomController
     
     public void onTick()
     {
-		for (Entry<String, CharacterController> entry : this._handlerIds.entrySet())
-		{
-			entry.getValue().onTick();
-		}
+    	this._characterControllers.forEach((key, value) -> value.onTick());
     }
     
     public boolean isFull()
     {
-    	return (this._characterCount == MAX_CHARACTER_COUNT);
+    	return (this._characterCount >= MAX_CHARACTER_COUNT);
+    }
+    
+    public List<CharacterController> getCharacterControllers()
+    {
+    	return this._characterControllers.values().stream().collect(Collectors.toList());
+    }
+    
+    public Set<String> getHandlerIds()
+    {
+    	return this._characterControllers.keySet();
     }
 
     public boolean containsCharacter(String handlerId)
     {
-    	return this._handlerIds.containsKey(handlerId);
+    	return this._characterControllers.containsKey(handlerId);
     }
 
     public void addCharacter(String handlerId)
     {
-    	if (!this._handlerIds.containsKey(handlerId))
+    	if (!this.containsCharacter(handlerId))
     	{
-    		CharacterController characterController = new CharacterController();
-    		characterController.onInit(handlerId);
     		this._characterCount++;
-    		this._handlerIds.put(handlerId, characterController);
+    		CharacterController characterController = new CharacterController();
+    		characterController.onInit(handlerId, this._characterCount);
+    		this._characterControllers.put(handlerId, characterController);
     	}
+    }
+    
+    public CharacterController getCharacter(String handlerId)
+    {
+    	return this._characterControllers.get(handlerId);
     }
 
     public void removeCharacter(String handlerId)
     {
-    	// TODO : setKill
-    	if (this._handlerIds.containsKey(handlerId))
+    	if (this.containsCharacter(handlerId))
     	{
-    		System.out.println(getClass().getName() + " delete " + handlerId);
-    		this._handlerIds.remove(handlerId);
+    		Log.info(getClass().getName(), "delete", "handlerId: " + handlerId);
+    		this._characterControllers.remove(handlerId);
     	}
     }
 }

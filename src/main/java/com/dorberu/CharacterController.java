@@ -1,24 +1,27 @@
 package com.dorberu;
 
+import java.awt.Point;
+
 public class CharacterController
 {
 	public String handlerId;
+	public int id;
+	public Point pos;
+	public Point add;
 	
-	private int _coolTime = 0;
-	
-    public boolean onInit(String handlerId)
+    public void onInit(String handlerId, int id)
     {
     	this.handlerId = handlerId;
-    	return true;
+    	this.id = id;
+    	this.pos = MapController.START_POINTS[(id - 1) % MapController.START_POINTS.length];
+    	this.add = new Point(0, 0);
     }
     
-    public void onTick()
+    public void onTick() {}
+    
+    public void update(Point pos, Point add)
     {
-    	if (this._coolTime++ > 90)
-    	{
-    		System.out.println(getClass().getName() + " onTick handlerId: " + this.handlerId);
-    		this._coolTime = 0;
-    	}
+    	this.pos = pos;
+    	this.add = add;
     }
-
 }

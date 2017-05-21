@@ -11,7 +11,7 @@ public class WebSocketVerticle extends AbstractVerticle
     @Override
     public void start()
     {
-    	System.out.println(getClass().getName() + " DEBUG " + "start");
+    	Log.info(getClass().getName() + "start");
 
     	_webSocketServer.onInit(vertx);
     }

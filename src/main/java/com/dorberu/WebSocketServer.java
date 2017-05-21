@@ -31,7 +31,7 @@ public class WebSocketServer implements EventBusMessageHandler.MessageReceiver
 
     public boolean onInit(Vertx vertx)
     {
-    	System.out.println(getClass().getName() + " onInit");
+    	Log.info(getClass().getName(), "onInit");
 
     	_vertx = vertx;
     	_eventBusMessageHandler = new EventBusMessageHandler(_vertx, this, "websocketserver.local", "websocketserver.global");
@@ -42,7 +42,7 @@ public class WebSocketServer implements EventBusMessageHandler.MessageReceiver
         {
             String handlerId = RandomStringUtils.random(EventBusMessageHandler.HANDLER_SIZE, "0123456789abcdefghijklmnopqrstuvwxyz");
             _socketList.put(handlerId, websocket);
-        	System.out.println(getClass().getName() +  " handlerId: " + handlerId + " connect");
+            Log.info(getClass().getName(), "connect", "handlerId: " + handlerId);
             
             websocket.handler(new Handler<Buffer>()
             {
@@ -74,8 +74,8 @@ public class WebSocketServer implements EventBusMessageHandler.MessageReceiver
                 }
             });
         }).listen(8080);
-        
-        System.out.println(getClass().getName() + " onInit completed");
+
+    	Log.info(getClass().getName(), "onInit", "complete");
         return true;
     }
     
@@ -84,14 +84,14 @@ public class WebSocketServer implements EventBusMessageHandler.MessageReceiver
     	if (_socketList.get(handlerId) != null)
     	{
     		_socketList.get(handlerId).writeFinalTextFrame(data.toString());
-            System.out.println(getClass().getName() + " sendMessage handlerId: " + handlerId + ", packetData: " + data.toString());
+            Log.trace(getClass().getName(), "sendMessage", "handlerId: " + handlerId, "packetData: " + data.toString());
     	}
     }
     
     @Override
     public void receivePacket(String handlerId, JsonObject packetData)
     {
-        System.out.println(getClass().getName() + " receivePacket handlerId: " + handlerId + ", packetData: " + packetData);
+        Log.trace(getClass().getName(), "receivePacket", "handlerId: " + handlerId, "packetData: " + packetData);
     	sendMessage(handlerId, packetData);
     }
 }
