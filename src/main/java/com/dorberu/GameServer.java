@@ -45,6 +45,7 @@ public class GameServer implements EventBusMessageHandler.MessageReceiver
     public BattleRoomController addBattleRoomController()
     {
     	BattleRoomController battleRoomController = new BattleRoomController();
+    	battleRoomController.onInit();
     	this.battleRoomControllerList.add(battleRoomController);
     	return battleRoomController;
     }

@@ -10,17 +10,20 @@ public class BattleRoomController
 {
 	private static final int MAX_CHARACTER_COUNT = 4;
 	private int _characterCount;
+	private MapController _mapController;
 	private Map<String, CharacterController> _characterControllers = new HashMap<>();
 	
 	
     public boolean onInit()
     {
+    	this._mapController = new MapController();
     	return true;
     }
     
     public void onTick()
     {
     	this._characterControllers.forEach((key, value) -> value.onTick());
+    	this._mapController.onTick();
     }
     
     public boolean isFull()
@@ -31,6 +34,11 @@ public class BattleRoomController
     public List<CharacterController> getCharacterControllers()
     {
     	return this._characterControllers.values().stream().collect(Collectors.toList());
+    }
+    
+    public MapController getMapController()
+    {
+    	return this._mapController;
     }
     
     public Set<String> getHandlerIds()

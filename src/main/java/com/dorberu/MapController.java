@@ -2,6 +2,9 @@ package com.dorberu;
 
 import java.awt.Dimension;
 import java.awt.Point;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class MapController
 {
@@ -37,5 +40,42 @@ public class MapController
 			_map = map;
 		}
 		return _map;
+	}
+	
+	class Bomb
+	{
+		public String handlerId;
+		public Point point;
+		public int countDown;
+		
+		public Bomb(String handlerId, Point point)
+		{
+			this.handlerId = handlerId;
+			this.point = point;
+			this.countDown = 3 * (int) GameVerticle.FPS;
+		}
+		
+		public void onTick()
+		{
+			this.countDown = Math.max(this.countDown, 0);
+		}
+	}
+	
+	private List<Bomb> _bombList = new ArrayList<>();
+	
+	public boolean setBomb(String handlerId, Point point)
+	{
+		List<Bomb> bombList = this._bombList.stream().filter(o -> o.equals(point)).collect(Collectors.toList());
+		if (bombList.size() > 0)
+		{
+			return false;
+		}
+		return true;
+	}
+	
+	public void onTick()
+	{
+		this._bombList.stream().forEach(o -> o.onTick());
+		this._bombList = this._bombList.stream().filter(o -> o.countDown > 0).collect(Collectors.toList());
 	}
 }
