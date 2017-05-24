@@ -6,6 +6,7 @@ public class CharacterController
 {
 	public String handlerId;
 	public int id;
+	public int life;
 	public Point pos;
 	public Point add;
 	
@@ -13,6 +14,7 @@ public class CharacterController
     {
     	this.handlerId = handlerId;
     	this.id = id;
+    	this.life = 1;
     	this.pos = MapController.START_POINTS[(id - 1) % MapController.START_POINTS.length];
     	this.add = new Point(0, 0);
     }
@@ -23,5 +25,15 @@ public class CharacterController
     {
     	this.pos = pos;
     	this.add = add;
+    }
+    
+    public void setLife(int life)
+    {
+    	this.life = life;
+    }
+    
+    public boolean isDead()
+    {
+    	return this.life <= 0;
     }
 }

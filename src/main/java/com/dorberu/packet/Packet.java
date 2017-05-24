@@ -22,6 +22,8 @@ public abstract class Packet
 		put(AddCharacterPacket.PACKET_ID, AddCharacterPacket.class);
 		put(MovePacket.PACKET_ID, MovePacket.class);
 		put(SetBombPacket.PACKET_ID, SetBombPacket.class);
+		put(DeadPacket.PACKET_ID, DeadPacket.class);
+		put(FinishPacket.PACKET_ID, FinishPacket.class);
 	}};
 
 	public static final String KEY_ID = "id";

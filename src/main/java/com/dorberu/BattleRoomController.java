@@ -6,13 +6,21 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.dorberu.packet.FinishPacket;
+
 public class BattleRoomController
 {
 	private static final int MAX_CHARACTER_COUNT = 4;
+	private GameServer _server;
 	private int _characterCount;
 	private MapController _mapController;
 	private Map<String, CharacterController> _characterControllers = new HashMap<>();
 	
+	
+	public BattleRoomController(GameServer server)
+	{
+		this._server = server;
+	}
 	
     public boolean onInit()
     {
@@ -24,6 +32,7 @@ public class BattleRoomController
     {
     	this._characterControllers.forEach((key, value) -> value.onTick());
     	this._mapController.onTick();
+    	this.checkFinish();
     }
     
     public boolean isFull()
@@ -73,6 +82,28 @@ public class BattleRoomController
     	{
     		Log.info(getClass().getName(), "delete", "handlerId: " + handlerId);
     		this._characterControllers.remove(handlerId);
+    	}
+    }
+    
+    public List<CharacterController> getLiveCharacters()
+    {
+    	return this._characterControllers.values().stream().filter(o -> !o.isDead()).collect(Collectors.toList());
+    }
+    
+    private void checkFinish()
+    {
+    	List<CharacterController> liveCharacterList = this.getLiveCharacters();
+    	if (liveCharacterList.size() <= 0)
+    	{
+    		this.getHandlerIds().forEach(id -> {
+    			FinishPacket.send(id, this._server, 0);
+    		});
+    	}
+    	else if (liveCharacterList.size() == 1)
+    	{
+    		this.getHandlerIds().forEach(id -> {
+    			FinishPacket.send(id, this._server, liveCharacterList.get(0).id);
+    		});
     	}
     }
 }
