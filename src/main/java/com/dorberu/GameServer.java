@@ -57,7 +57,7 @@ public class GameServer implements EventBusMessageHandler.MessageReceiver
     
     public BattleRoomController getEmptyBattleRoomController()
     {
-    	return this.battleRoomControllerList.stream().filter(o -> !o.isFull()).findFirst().orElse(null);
+    	return this.battleRoomControllerList.stream().filter(o -> o.enableJoin()).findFirst().orElse(null);
     }
     
     public void sendPacket(String handlerId, JsonObject packet)
